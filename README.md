@@ -6,4 +6,4 @@ This project holds Python scripts that are used to retrieve, move and manage dat
 - DataReconciliation.py
   - Head script
 - SSH_Tools.py
-  - helper functions that use the Paramiko SSH client to connect to remote computers
+  - Helper functions that use the Paramiko SSH client to connect to remote computers

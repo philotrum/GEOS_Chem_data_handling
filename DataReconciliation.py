@@ -1,10 +1,9 @@
 import paramiko
 import base64
-import sys
+#import io
+#Dataimport sys
 
-#sys.path.append('~\Documents\Github\Geos_Chem_data_handling')
-
-from SSH_Tools import drill
+from SSH_Tools import *
 
 #*****************************
 # Start of program execution
@@ -17,7 +16,7 @@ basePath = 'c:\users\grahamk\documents\docs\jenny fisher\\'
 hostServer = 'HPC'
 #hostServer = 'NCI'
 
-# Set up login information
+# Set up login information.
 if hostServer == 'NCI':
     passwordFilename = 'loginNCI.txt'
     loginName = 'gck574'
@@ -53,31 +52,33 @@ client.connect(serverAddress, username=loginName, password=myPassword)
 # Clear the decrypted password
 myPassword = ''
 
-# Create a list to store the results of the interrogation.
-# This is a list to which I add more and more lists.
-# At each level I store the name and depth of the directory I am in,
-# a list of directories and a list of the files in the directory.
-# I can add other lists of any other information we might need
-# that is returned by the ls -l command. This is just proof of concept.
-structure = []
-
 # Initialise a couple of attribute variables for the recursive function.
 # Python allows you to effectively create static variables that are associated
 # with a function.
 
-# drill.depth allows me to track how deep into the file structure I am
-drill.depth = 0
 # drill.hostserver allows me to run different commands depending on the machine
 # I am inspecting. NCI uses a limited set of commands and prefixes them with
 # mdss to manage the tape storage system.
 drill.server = hostServer
 
+# Set up the empty list to store the filesystem structure in.
+structure = []
+
 # Call the recursive function passing it the base directory being
 # interrogated.
 if (hostServer == 'NCI'):
-    drill('./geos-chem', structure)
+    structure = drill('./geos-chem', client)
 else:
-    drill('/hpc/data/chemistry/CAC/GEOS_Chem', structure, client)
+    #structure = drill('/hpc/data/chemistry/CAC/GEOS_Chem/GEOS_2x2.5', client)
+    structure = drill('./drillTest', client)
 
 # Close the SSH client
 client.close()
+
+outS = open('output.txt', mode = 'w')
+
+print_File_Structure(structure, outS)
+
+#structure = []
+
+outS.close()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 
 import sys, os
 from ftplib import FTP
@@ -47,14 +47,12 @@ def getData_html(inDate, inExtensions):
     
 def processData(inDate, inExtensions):
     
-    for ext in inExtensions:
-    
+    for ext in inExtensions:    
         try:
             filename = '/home/admin/tmp/GEOSFP.' + inDate + '.' + ext + '.025x03125.nc'
             print 'Processing ' + filename
             processedFilename = '/home/admin/tmp/GEOSFP.' + inDate + '.' + ext + '.025x03125' + '.AU.nc'
             if (not os.path.isfile(processedFilename)):
-                pass
                 commandline = 'ncks -a -d lat,-46.0,-6.0 -d lon,110.0,155.0 ' + filename + ' ' + processedFilename
                 os.system(commandline)
             else:
@@ -73,7 +71,7 @@ month = startDate[4:6]
 daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 if (int(year) % 4 == 0):
     daysInMonths[1] = 29
-    
+
 start = dt.datetime.now()
 print start 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 
 # This file copies global GEOSChem input files from the ComputeCanada server, extracts the data for 
 # the Australian region into another file, and then copies the files to NCI for use.
@@ -11,6 +11,7 @@ import sys, os
 from ftplib import FTP
 import urllib
 import threading
+from multiprocessing import Pool
 import datetime as dt
 import paramiko
 
@@ -29,9 +30,9 @@ def getData_ftp(inDate, inExtensions):
                 print('Copying ' + filename)
                 ftp.retrbinary('RETR ' + filename, localFile.write, 1024)
             else:
-                print filename + ' already exists. No need to copy.'
+                print(filename + ' already exists. No need to copy.')
         except:
-            print filename + ' failed to copy from the remote server.'
+            print(filename + ' failed to copy from the remote server.')
     
     ftp.quit()
     ftp = None
@@ -44,35 +45,33 @@ def getData_html(inDate, inExtensions):
         
         try:
             filename = 'GEOSFP.' + inDate + '.' + ext + '.025x03125.nc'
-            print 'Filename: ' + filename
+            print('Filename: ' + filename)
             remoteFilename = url + filename
             if (not os.path.isfile(filename)):
                 urllib.urlretrieve(remoteFilename, filename)
             else:
-                print filename + ' already exists. No need to copy.'
+                print(filename + ' already exists. No need to copy.')
         except:
-            print filename + ' failed to copy from the remote server.'
+            print(filename + ' failed to copy from the remote server.')
             missingFiles.append(filename)
     
 def processData(inDate, inExtensions):
     
-    for ext in inExtensions:
-    
+    for ext in inExtensions:    
         try:
             filename = '/home/admin/tmp/GEOSFP.' + inDate + '.' + ext + '.025x03125.nc'
             if (os.path.isfile(filename)):
-                print 'Processing ' + filename
+                print()'Processing ' + filename)
                 processedFilename = '/home/admin/tmp/GEOSFP.' + inDate + '.' + ext + '.025x03125' + '.AU.nc'
                 if (not os.path.isfile(processedFilename)):
-                    pass
                     commandline = 'ncks -a -d lat,-46.0,-6.0 -d lon,110.0,155.0 ' + filename + ' ' + processedFilename
                     os.system(commandline)
                 else:
-                    print 'No need to process ' + processedFilename + ' as it already exists.'
+                    print()'No need to process ' + processedFilename + ' as it already exists.')
             else:
-                print filename + ' does not exist'
+                print(filename + ' does not exist')
         except:
-            print 'Error processing ' + filename
+            print()'Error processing ' + filename)
             corruptFiles.append(filename)
             
 # Start of program
@@ -88,7 +87,7 @@ if (int(year) % 4 == 0):
     daysInMonths[1] = 29
 
 start = dt.datetime.now()
-print start
+print('Start time: ' + start)
 
 missingFiles = []
 corruptFiles = [] 
@@ -126,7 +125,7 @@ else :
         for i in range(startDay, finishDay):
             startDay += 1
             date = year + month + str(startDay).zfill(2)
-            print date
+            print(date)
             t = threading.Thread(target = getData_html, args = (date, extensions,))
             threads.append(t)
         
@@ -136,31 +135,20 @@ else :
         for x in threads:
             x.join()
         
-    finish = dt.datetime.now()
-    totalTime = finish - start
-    print str(totalTime)
+    downloadFinish = dt.datetime.now()
+    downloadTime = downloadFinish - start
+    print('Download time: ' + str(downloadTime))
     
     threads = None
     
-    threads = []
-    day = 1
-    for i in range(daysInMonth):
+    daysToProcess = [year + month + str(day).zfill(2) for day in range(1, daysInMonth)]
+    with Pool() as p:
+        p.map(processData, daysToProcess)
+
+    for day in daysToProcess:
         
-        date = year + month + str(day).zfill(2)
-        t = threading.Thread(target = processData, args = (date, extensions,))
-        threads.append(t)
-        day += 1
-        
-    for x in threads:
-        x.start()
-        
-    for x in threads:
-        x.join()
-        
-    for day in range(daysInMonth):
-        
-        date = year + month + str(day + 1).zfill(2)
-        commandline =  'scp *' + date + '*.AU* gck574@raijin.nci.org.au:/g/data3/m19/geos-chem/data/GEOS_0.25x0.3125_AU/GEOS_FP/' 
+        #date = year + month + str(day + 1).zfill(2)
+        commandline =  'scp *' + day + '*.AU* gck574@raijin.nci.org.au:/g/data3/m19/geos-chem/data/GEOS_0.25x0.3125_AU/GEOS_FP/' 
         commandline = commandline + year + '/' + month + '/'
         os.system(commandline)
         
@@ -184,13 +172,13 @@ else :
     
     numCopiedFiles = int(ls_ret[0])
     if (numCopiedFiles == totalNumFiles):
-        print 'Copied all files correctly'
+        print('Copied all files correctly')
     else:
-        print 'Only ' + str(numCopiedFiles) + ' were copied. There should be ' + str(totalNumFiles) + ' for this month.'
-        print 'Missing files:'
+        print('Only ' + str(numCopiedFiles) + ' were copied. There should be ' + str(totalNumFiles) + ' for this month.')
+        print('Missing files:')
         for line in missingFiles:
             print line
-        print 'Corrupt files:'
+        print('Corrupt files:')
         for line in corruptFiles:
-            print line
+            print(line)
         

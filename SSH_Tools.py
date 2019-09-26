@@ -103,5 +103,11 @@ def print_Dir_List(inList, inOutS):
         
         for file in currDir[fields.fileList]:
              inOutS.write(padding + '-' + str(file[0]) +' ' + str(file[1]) + '\n')
-        
+    
+    # This is a bit ugly as this should be fully recursive, but
+    # I have spent too much time trying to crack this nut, so I
+    # am doing the dirty. Maybe one day I will fix this...
+    for file in inList[fields.fileList]:
+        inOutS.write('-' + str(file[0]) +' ' + str(file[1]) + '\n')
+             
     print_Dir_List.depth -= 1

@@ -142,7 +142,7 @@ else :
     
     threads = None
 
-    daysToProcess = [year + month + str(day).zfill(2) for day in range(1, daysInMonth)]
+    daysToProcess = [year + month + str(day).zfill(2) for day in range(1, daysInMonth +1)]
     args = [daysToProcess]
     with Pool() as p:
         p.map(processData, daysToProcess)
